@@ -56,25 +56,13 @@ func (gr *Grcron) ParseState() error {
 func (gr Grcron) IsActive() (bool, error) {
 	cmd := exec.Command("sh", "-c", "ps cax | grep -q keepalived")
 	err := cmd.Run()
-	var exitStatus int
-	if e2, ok := err.(*exec.ExitError); ok {
-		if s, ok := e2.Sys().(syscall.WaitStatus); ok {
-			exitStatus = s.ExitStatus()
-		} else {
-			return false, fmt.Errorf("Unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus.")
-		}
-	} else {
-		exitStatus = 0
+
+	// 異常終了はkeepalivedプロセスがいないとみなす
+	if _, ok := err.(*exec.ExitError); ok {
+		return false, fmt.Errorf("keepalived is probably down.")
 	}
 
-	if gr.CurrentState == "active" && exitStatus == 0 {
-		return true, nil
-	} else {
-		if gr.CurrentState == "active" {
-			fmt.Fprintf(os.Stderr, "gr.CurrentState:active, but keepalived is probably down.\n")
-		}
-		return false, nil
-	}
+	return gr.CurrentState == "active", nil
 }
 
 func main() {
