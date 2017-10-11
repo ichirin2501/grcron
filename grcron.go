@@ -18,10 +18,7 @@ type Grcron struct {
 	CurrentState string
 }
 
-func (gr *Grcron) Validate() error {
-	if gr == nil {
-		return fmt.Errorf("piyo")
-	}
+func (gr Grcron) Validate() error {
 	_, err := os.Stat(gr.StateFile)
 	if err != nil {
 		return err
@@ -34,7 +31,7 @@ func (gr *Grcron) Validate() error {
 
 func (gr *Grcron) ParseState() error {
 	if gr == nil {
-		return fmt.Errorf("hoge")
+		return fmt.Errorf("Don't run nil Pointer Receiver.")
 	}
 	f, err := os.Open(gr.StateFile)
 	defer f.Close()
@@ -56,7 +53,7 @@ func (gr *Grcron) ParseState() error {
 	}
 	return nil
 }
-func (gr *Grcron) IsActive() (bool, error) {
+func (gr Grcron) IsActive() (bool, error) {
 	cmd := exec.Command("sh", "-c", "ps cax | grep -q keepalived")
 	err := cmd.Run()
 	var exitStatus int
