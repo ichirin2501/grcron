@@ -34,10 +34,10 @@ func (gr *Grcron) ParseState() error {
 		return fmt.Errorf("Don't run nil Pointer Receiver.")
 	}
 	f, err := os.Open(gr.StateFile)
-	defer f.Close()
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	sc := bufio.NewScanner(f)
 	if !sc.Scan() {
