@@ -1,1 +1,1 @@
-test dayo
+|'-') keepalivedと一緒に使ってkickするやつだよ
