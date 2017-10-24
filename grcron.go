@@ -1,3 +1,9 @@
+/* grcron
+ *
+ * Copyright (c) 2017 Motoaki Nishikawa
+ * Distributed under MIT license, see LICENSE file.
+ */
+
 package main
 
 import (
