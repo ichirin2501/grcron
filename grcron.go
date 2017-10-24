@@ -10,7 +10,7 @@ import (
 	"syscall"
 )
 
-const Version string = "0.0.1"
+const Version string = "0.0.3"
 
 type Grcron struct {
 	StateFile    string
