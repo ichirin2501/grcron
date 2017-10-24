@@ -72,7 +72,7 @@ func main() {
 	)
 
 	gr := &Grcron{}
-	flag.StringVar(&gr.StateFile, "f", "/var/run/grcron/state", "grcron state file.")
+	flag.StringVar(&gr.StateFile, "f", "/var/lib/grcron/state", "grcron state file.")
 	flag.StringVar(&gr.DefaultState, "s", "passive", "grcron default state.")
 	flag.BoolVar(&showVersion, "version", false, "show version number.")
 	flag.BoolVar(&showVersion, "v", false, "show version number.")
