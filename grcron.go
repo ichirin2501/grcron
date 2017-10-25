@@ -16,15 +16,15 @@ import (
 	"syscall"
 )
 
-const Version string = "0.0.3"
+const version string = "0.0.3"
 
-type Grcron struct {
+type grcron struct {
 	StateFile    string
 	DefaultState string
 	CurrentState string
 }
 
-func (gr Grcron) Validate() error {
+func (gr grcron) Validate() error {
 	_, err := os.Stat(gr.StateFile)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (gr Grcron) Validate() error {
 	return nil
 }
 
-func (gr *Grcron) ParseState() error {
+func (gr *grcron) ParseState() error {
 	if gr == nil {
 		return fmt.Errorf("Don't run nil Pointer Receiver.")
 	}
@@ -59,7 +59,7 @@ func (gr *Grcron) ParseState() error {
 	}
 	return nil
 }
-func (gr Grcron) IsActive() (bool, error) {
+func (gr grcron) IsActive() (bool, error) {
 	cmd := exec.Command("sh", "-c", "ps cax | grep -q keepalived")
 	err := cmd.Run()
 
@@ -77,7 +77,7 @@ func main() {
 		dryRun      bool
 	)
 
-	gr := &Grcron{}
+	gr := &grcron{}
 	flag.StringVar(&gr.StateFile, "f", "/var/lib/grcron/state", "grcron state file.")
 	flag.StringVar(&gr.DefaultState, "s", "passive", "grcron default state.")
 	flag.BoolVar(&showVersion, "version", false, "show version number.")
@@ -88,7 +88,7 @@ func main() {
 	args := flag.Args()
 
 	if showVersion {
-		fmt.Printf("grcron %s, %s built for %s/%s\n", Version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("grcron %s, %s built for %s/%s\n", version, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 		return
 	}
 
