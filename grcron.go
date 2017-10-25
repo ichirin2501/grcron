@@ -30,14 +30,14 @@ func (gr grcron) Validate() error {
 		return err
 	}
 	if !(gr.DefaultState == "active" || gr.DefaultState == "passive") {
-		return fmt.Errorf("The Value of DefaultState:%s is incorrect.", gr.DefaultState)
+		return fmt.Errorf("The Value of DefaultState:%s is incorrect", gr.DefaultState)
 	}
 	return nil
 }
 
 func (gr *grcron) ParseState() error {
 	if gr == nil {
-		return fmt.Errorf("Don't run nil Pointer Receiver.")
+		return fmt.Errorf("Don't run nil Pointer Receiver")
 	}
 	f, err := os.Open(gr.StateFile)
 	if err != nil {
@@ -65,7 +65,7 @@ func (gr grcron) IsActive() (bool, error) {
 
 	// 異常終了はkeepalivedプロセスがいないとみなす
 	if _, ok := err.(*exec.ExitError); ok {
-		return false, fmt.Errorf("keepalived is probably down.")
+		return false, fmt.Errorf("keepalived is probably down")
 	}
 
 	return gr.CurrentState == "active", nil
