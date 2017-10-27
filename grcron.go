@@ -13,10 +13,9 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"syscall"
 )
 
-const version string = "0.0.3"
+const version string = "0.0.4"
 
 type grcron struct {
 	StateFile    string
@@ -24,62 +23,69 @@ type grcron struct {
 	CurrentState string
 }
 
-func (gr grcron) Validate() error {
-	_, err := os.Stat(gr.StateFile)
-	if err != nil {
-		return err
+func newGrcron(defaultState string, stateFile string) (*grcron, error) {
+	if !(defaultState == "active" || defaultState == "passive") {
+		return nil, fmt.Errorf("The Value of DefaultState:%s is incorrect", defaultState)
 	}
-	if !(gr.DefaultState == "active" || gr.DefaultState == "passive") {
-		return fmt.Errorf("The Value of DefaultState:%s is incorrect", gr.DefaultState)
-	}
-	return nil
-}
 
-func (gr *grcron) ParseState() error {
-	if gr == nil {
-		return fmt.Errorf("Don't run nil Pointer Receiver")
-	}
-	f, err := os.Open(gr.StateFile)
+	f, err := os.Open(stateFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 
+	var curr string
 	sc := bufio.NewScanner(f)
-	if !sc.Scan() {
-		return sc.Err()
-	}
+	sc.Scan()
 	st := sc.Text()
 	switch st {
 	case "active", "passive":
-		gr.CurrentState = st
+		curr = st
 	default:
-		fmt.Fprintf(os.Stderr, "corrupted state file('%s') (content='%s'), staying at gr.DefaultState('%s')\n", gr.StateFile, st, gr.DefaultState)
-		gr.CurrentState = gr.DefaultState
+		fmt.Fprintf(os.Stderr, "corrupted state file('%s') (content='%s'), staying at gr.DefaultState('%s')\n", stateFile, st, defaultState)
+		curr = defaultState
 	}
-	return nil
+
+	return &grcron{
+		DefaultState: defaultState,
+		StateFile:    stateFile,
+		CurrentState: curr,
+	}, nil
 }
-func (gr grcron) IsActive() (bool, error) {
+
+var testKeepalivedActive func() (bool, error)
+
+func (gr grcron) keepalivedActive() (bool, error) {
+	if testKeepalivedActive != nil {
+		return testKeepalivedActive()
+	}
 	cmd := exec.Command("sh", "-c", "ps cax | grep -q keepalived")
 	err := cmd.Run()
-
 	// 異常終了はkeepalivedプロセスがいないとみなす
 	if _, ok := err.(*exec.ExitError); ok {
 		return false, fmt.Errorf("keepalived is probably down")
 	}
+	return true, nil
+}
 
-	return gr.CurrentState == "active", nil
+func (gr grcron) canRun() (bool, error) {
+	ka, err := gr.keepalivedActive()
+	if err != nil {
+		return false, err
+	}
+	return gr.CurrentState == "active" && ka, nil
 }
 
 func main() {
 	var (
-		showVersion bool
-		dryRun      bool
+		showVersion  bool
+		dryRun       bool
+		stateFile    string
+		defaultState string
 	)
 
-	gr := &grcron{}
-	flag.StringVar(&gr.StateFile, "f", "/var/lib/grcron/state", "grcron state file.")
-	flag.StringVar(&gr.DefaultState, "s", "passive", "grcron default state.")
+	flag.StringVar(&stateFile, "f", "/var/lib/grcron/state", "grcron state file.")
+	flag.StringVar(&defaultState, "s", "passive", "grcron default state.")
 	flag.BoolVar(&showVersion, "version", false, "show version number.")
 	flag.BoolVar(&showVersion, "v", false, "show version number.")
 	flag.BoolVar(&dryRun, "dryrun", false, "dry-run.")
@@ -92,11 +98,8 @@ func main() {
 		return
 	}
 
-	if err := gr.Validate(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	if err := gr.ParseState(); err != nil {
+	gr, err := newGrcron(defaultState, stateFile)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -106,29 +109,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	isa, err := gr.IsActive()
+	canrun, err := gr.canRun()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	if dryRun {
-		fmt.Printf("dry-run gr.CurrentState:%s, gr.IsActive:%v finished.\n", gr.CurrentState, isa)
+		fmt.Printf("dry-run gr.CurrentState:%s, gr.IsActive:%v finished.\n", gr.CurrentState, canrun)
 		return
 	}
 
-	if !isa {
+	if !canrun {
 		return
 	}
 
-	// run !!
-	binary, err := exec.LookPath(args[0])
+	cmd := exec.Command(args[0])
+	for _, arg := range args[1:] {
+		cmd.Args = append(cmd.Args, arg)
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	if err := syscall.Exec(binary, args, os.Environ()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
