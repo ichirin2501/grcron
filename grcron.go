@@ -124,10 +124,7 @@ func main() {
 		return
 	}
 
-	cmd := exec.Command(args[0])
-	for _, arg := range args[1:] {
-		cmd.Args = append(cmd.Args, arg)
-	}
+	cmd := exec.Command(args[0], args[1:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
