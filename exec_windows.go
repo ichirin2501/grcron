@@ -1,4 +1,4 @@
-// +build !linux
+// +build windows
 
 package main
 
@@ -18,7 +18,7 @@ func exec(command string, args []string, envv []string) error {
 
 	sigc := make(chan os.Signal, 1)
 	defer close(sigc)
-	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigc, os.Interrupt)
 
 	go func() {
 		for sig := range sigc {
