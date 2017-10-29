@@ -31,15 +31,8 @@ func exec(command string, args []string, envv []string) error {
 		}
 	}()
 
-	var waitStatus syscall.WaitStatus
 	if err := cmd.Run(); err != nil {
-		if err != nil {
-			return err
-		}
-		if exitError, ok := err.(*osexec.ExitError); ok {
-			waitStatus = exitError.Sys().(syscall.WaitStatus)
-			os.Exit(waitStatus.ExitStatus())
-		}
+		return err
 	}
 
 	return nil
