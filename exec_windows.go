@@ -6,7 +6,6 @@ import (
 	"os"
 	osexec "os/exec"
 	"os/signal"
-	"syscall"
 )
 
 func exec(command string, args []string, envv []string) error {
