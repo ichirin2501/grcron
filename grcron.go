@@ -11,7 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
+	osexec "os/exec"
 	"runtime"
 )
 
@@ -59,10 +59,10 @@ func (gr grcron) keepalivedActive() (bool, error) {
 	if testKeepalivedActive != nil {
 		return testKeepalivedActive()
 	}
-	cmd := exec.Command("sh", "-c", "ps cax | grep -q keepalived")
+	cmd := osexec.Command("sh", "-c", "ps cax | grep -q keepalived")
 	err := cmd.Run()
 	// 異常終了はkeepalivedプロセスがいないとみなす
-	if _, ok := err.(*exec.ExitError); ok {
+	if _, ok := err.(*osexec.ExitError); ok {
 		return false, fmt.Errorf("keepalived is probably down")
 	}
 	return true, nil
@@ -124,14 +124,7 @@ func main() {
 		return
 	}
 
-	cmd := exec.Command(args[0], args[1:]...)
-
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
+	if err := exec(args[0], args[1:], os.Environ()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
