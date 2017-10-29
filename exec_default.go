@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	osexec "os/exec"
 	"os/signal"
@@ -17,7 +16,7 @@ func exec(command string, args []string, envv []string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Env = envv
 
-	signals := make([]os.Signal, 32)
+	signals := make([]os.Signal, 31)
 	for i := range signals {
 		signals[i] = syscall.Signal(i + 1)
 	}
