@@ -16,18 +16,15 @@ func exec(command string, args []string, envv []string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Env = envv
 
-	signals := make([]os.Signal, 31)
-	for i := range signals {
-		signals[i] = syscall.Signal(i + 1)
-	}
-
 	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, signals...)
+	defer close(sigc)
+	signal.Notify(sigc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		sig := <-sigc
-		if cmd.Process != nil {
-			cmd.Process.Signal(sig)
+		for sig := range sigc {
+			if cmd.Process != nil {
+				cmd.Process.Signal(sig)
+			}
 		}
 	}()
 
