@@ -15,7 +15,7 @@ import (
 	"runtime"
 )
 
-const version string = "0.0.4"
+const version string = "0.0.5"
 
 type grcron struct {
 	StateFile    string
